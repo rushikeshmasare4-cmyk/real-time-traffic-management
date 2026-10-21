@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FLOWGRID — Real-Time Traffic Management System (C++17 Engine)</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header / Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 3v18M3 12h18"/>
+          <circle cx="12" cy="6" r="2" fill="#ef4444"/>
+          <circle cx="12" cy="12" r="2" fill="#f59e0b"/>
+          <circle cx="12" cy="18" r="2" fill="#10b981"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">FLOWGRID <span class="badge badge-tech">C++17 Core</span></div>
+        <div class="brand-sub">Real-Time Urban Traffic Management System & DSA Visualizer</div>
+      </div>
+    </div>
+
+    <!-- Backend Status & Tab Nav -->
+    <div class="nav-right">
+      <div id="backend-status" class="status-pill status-connecting" title="Checking C++ REST Server connection">
+        <span class="status-dot"></span>
+        <span id="backend-status-text">Connecting to C++ Backend...</span>
+      </div>
+
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="simulator">🚦 Simulator</button>
+        <button class="nav-tab" data-tab="graph">🗺️ City Graph & Dijkstra</button>
+        <button class="nav-tab" data-tab="dsa">🧠 DSA Visualizer</button>
+        <button class="nav-tab" data-tab="viva">📚 Viva & Report</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: INTERACTIVE SIMULATOR                                        -->
+    <!-- =================================================================== -->
+    <section id="tab-simulator" class="tab-pane active">
+      <!-- Top Action Toolbar -->
+      <div class="toolbar-card">
+        <div class="toolbar-group">
+          <button id="btn-step" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+            Step 1 Tick
+          </button>
+          <button id="btn-play" class="btn btn-success">
+            <svg id="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span id="play-text">Auto Play</span>
+          </button>
+          <div class="speed-control">
+            <label for="sim-speed">Speed:</label>
+            <select id="sim-speed" class="select-input">
+              <option value="1000">1x (1.0s)</option>
+              <option value="500" selected>2x (0.5s)</option>
+              <option value="250">4x (0.25s)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="toolbar-group">
+          <button id="btn-demo" class="btn btn-purple">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Run Viva Demo Scenario
+          </button>
+          <button id="btn-batch-add" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            Simulate Traffic (+5)
+          </button>
+          <button id="btn-reset" class="btn btn-danger">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Vehicle Injection Bar -->
+      <div class="ingest-card">
+        <div class="ingest-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Quick Ingestion
+        </div>
+        <div class="ingest-controls">
+          <div class="control-field">
+            <label>Approach Lane:</label>
+            <select id="inp-direction" class="select-input">
+              <option value="NORTH">North Approach (from North Gate)</option>
+              <option value="SOUTH">South Approach (from South Terminal)</option>
+              <option value="EAST">East Approach (from East Bridge)</option>
+              <option value="WEST">West Approach (from West End)</option>
+            </select>
+          </div>
+          <div class="control-field">
+            <label>Origin Node:</label>
+            <select id="inp-origin" class="select-input">
+              <option value="1">1: Central Square</option>
+              <option value="2" selected>2: North Gate</option>
+              <option value="3">3: East Bridge</option>
+              <option value="4">4: South Terminal</option>
+              <option value="5">5: West End</option>
+              <option value="6">6: Tech Park</option>
+              <option value="7">7: University Circle</option>
+              <option value="8">8: Harbor View</option>
+            </select>
+          </div>
+          <div class="control-field">
+            <label>Destination Node:</label>
+            <select id="inp-dest" class="select-input">
+              <option value="1">1: Central Square</option>
+              <option value="2">2: North Gate</option>
+              <option value="3">3: East Bridge</option>
+              <option value="4" selected>4: South Terminal</option>
+              <option value="5">5: West End</option>
+              <option value="6">6: Tech Park</option>
+              <option value="7">7: University Circle</option>
+              <option value="8">8: Harbor View</option>
+            </select>
+          </div>
+
+          <div class="ingest-btn-group">
+            <button id="btn-add-car" class="btn btn-sm btn-outline">+ Add Car (FIFO)</button>
+            <button id="btn-add-bus" class="btn btn-sm btn-outline">+ Add Bus (FIFO)</button>
+            <button id="btn-add-ambulance" class="btn btn-sm btn-emg-amb">+ 🚑 Ambulance (P1)</button>
+            <button id="btn-add-fire" class="btn btn-sm btn-emg-fire">+ 🚒 Fire Engine (P2)</button>
+            <button id="btn-add-police" class="btn btn-sm btn-emg-pol">+ 🚓 Police (P3)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Simulator Layout: 4-Way Intersection Visualization & Metrics -->
+      <div class="simulator-grid">
+
+        <!-- Left Column: Visual 4-Way Intersection -->
+        <div class="intersection-view-card">
+          <div class="card-header">
+            <div class="card-title">4-Way Central Square Intersection (Node 1)</div>
+            <div class="phase-badge" id="phase-badge">
+              Active: <span id="active-phase-text" class="text-green font-bold">NORTH GREEN</span>
+              (<span id="active-phase-timer">4</span>s remaining)
+            </div>
+          </div>
+
+          <!-- Intersection Canvas / Visual Box -->
+          <div class="intersection-stage" id="intersection-stage">
+
+            <!-- NORTH APPROACH -->
+            <div class="approach-box approach-north">
+              <div class="approach-header">
+                <span class="approach-name">NORTH (Node 2)</span>
+                <span class="queue-counter" id="q-count-north">0 vehicles</span>
+              </div>
+              <!-- Traffic Signal Housing -->
+              <div class="traffic-light-housing" id="signal-north">
+                <div class="signal-lamp red active"></div>
+                <div class="signal-lamp yellow"></div>
+                <div class="signal-lamp green"></div>
+              </div>
+              <!-- Approach Road Lane -->
+              <div class="lane-track lane-vertical" id="vehicles-north"></div>
+            </div>
+
+            <!-- WEST APPROACH -->
+            <div class="approach-box approach-west">
+              <div class="approach-header">
+                <span class="approach-name">WEST (Node 5)</span>
+                <span class="queue-counter" id="q-count-west">0 vehicles</span>
+              </div>
+              <div class="traffic-light-housing" id="signal-west">
+                <div class="signal-lamp red active"></div>
+                <div class="signal-lamp yellow"></div>
+                <div class="signal-lamp green"></div>
+              </div>
+              <div class="lane-track lane-horizontal" id="vehicles-west"></div>
+            </div>
+
+            <!-- CENTRAL JUNCTION CORE -->
+            <div class="intersection-core">
+              <div class="junction-center-circle">
+                <div class="junction-name">CENTRAL SQUARE</div>
+                <div class="junction-id">ID: 1</div>
+                <div id="junction-anim-zone" class="junction-anim-zone"></div>
+              </div>
+              <!-- Crosswalk markings -->
+              <div class="crosswalk crosswalk-n"></div>
+              <div class="crosswalk crosswalk-s"></div>
+              <div class="crosswalk crosswalk-e"></div>
+              <div class="crosswalk crosswalk-w"></div>
+            </div>
+
+            <!-- EAST APPROACH -->
+            <div class="approach-box approach-east">
+              <div class="approach-header">
+                <span class="approach-name">EAST (Node 3)</span>
+                <span class="queue-counter" id="q-count-east">0 vehicles</span>
+              </div>
+              <div class="traffic-light-housing" id="signal-east">
+                <div class="signal-lamp red active"></div>
+                <div class="signal-lamp yellow"></div>
+                <div class="signal-lamp green"></div>
+              </div>
+              <div class="lane-track lane-horizontal" id="vehicles-east"></div>
+            </div>
+
+            <!-- SOUTH APPROACH -->
+            <div class="approach-box approach-south">
+              <div class="approach-header">
+                <span class="approach-name">SOUTH (Node 4)</span>
+                <span class="queue-counter" id="q-count-south">0 vehicles</span>
+              </div>
+              <div class="traffic-light-housing" id="signal-south">
+                <div class="signal-lamp red active"></div>
+                <div class="signal-lamp yellow"></div>
+                <div class="signal-lamp green"></div>
+              </div>
+              <div class="lane-track lane-vertical" id="vehicles-south"></div>
+            </div>
+
+          </div>
+
+          <!-- Adaptive Timing Feedback Card -->
+          <div class="adaptive-feedback">
+            <span class="badge badge-purple">Adaptive Controller</span>
+            <span>Allocated Green Time: <strong id="allocated-green">4</strong>s</span>
+            <span class="divider">|</span>
+            <span>Safety Invariant: <strong id="safety-status" class="text-green">PASS (No Conflicting Greens)</strong></span>
+          </div>
+        </div>
+
+        <!-- Right Column: Live Statistics & Event Log -->
+        <div class="metrics-column">
+
+          <!-- Performance Metric Cards Grid -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon bg-blue">🚗</div>
+              <div class="stat-content">
+                <div class="stat-label">Total Generated</div>
+                <div class="stat-value" id="stat-generated">0</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon bg-green">🏁</div>
+              <div class="stat-content">
+                <div class="stat-label">Total Processed</div>
+                <div class="stat-value" id="stat-processed">0</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon bg-amber">⏳</div>
+              <div class="stat-content">
+                <div class="stat-label">Currently Waiting</div>
+                <div class="stat-value" id="stat-waiting">0</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon bg-red">🚨</div>
+              <div class="stat-content">
+                <div class="stat-label">Emergency Cleared</div>
+                <div class="stat-value" id="stat-emergency">0 / 0</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon bg-cyan">⏱️</div>
+              <div class="stat-content">
+                <div class="stat-label">Avg Wait Delay</div>
+                <div class="stat-value"><span id="stat-avg-wait">0.00</span> <small>ticks</small></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon bg-purple">⚡</div>
+              <div class="stat-content">
+                <div class="stat-label">Throughput</div>
+                <div class="stat-value"><span id="stat-throughput">0.00</span> <small>v/tick</small></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Approach Congestion Bars -->
+          <div class="congestion-card">
+            <div class="card-subtitle">Approach Congestion Rankings (Descending)</div>
+            <div id="congestion-bars">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Event Log Card -->
+          <div class="event-log-card">
+            <div class="card-header-sm">
+              <span class="card-subtitle">Live System Event Log (Circular Buffer)</span>
+              <button id="btn-clear-log" class="btn-text">Clear</button>
+            </div>
+            <div class="event-log-container" id="event-log">
+              <div class="log-entry log-info">[Tick 0] FLOWGRID simulation engine initialized and ready.</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Bottom Detailed Queues Breakdown -->
+      <div class="queues-breakdown-card">
+        <div class="card-header">
+          <div class="card-title">Lane Queues Breakdown: FIFO Ordinary vs. Min-Heap Emergency</div>
+          <div class="search-box">
+            <input type="text" id="inp-search-vehicle" placeholder="Search vehicle ID (e.g. VEH-0001)...">
+            <button id="btn-search-vehicle" class="btn btn-sm btn-primary">Search O(1)</button>
+          </div>
+        </div>
+        <div id="search-result-banner" class="search-banner hidden"></div>
+
+        <div class="queues-grid">
+          <!-- North Lane Card -->
+          <div class="lane-detail-card" id="detail-north">
+            <div class="lane-detail-header">
+              <span>North Approach</span>
+              <span class="badge" id="badge-q-north">0 waiting</span>
+            </div>
+            <div class="lane-sub-list">
+              <div class="sub-list-title text-red">Priority Queue (Emergency Min-Heap):</div>
+              <div class="sub-list-items" id="detail-emg-north"><div class="empty-hint">None</div></div>
+            </div>
+            <div class="lane-sub-list">
+              <div class="sub-list-title text-blue">FIFO Queue (Civilian Arrival Order):</div>
+              <div class="sub-list-items" id="detail-ord-north"><div class="empty-hint">None</div></div>
+            </div>
+          </div>
+
+          <!-- South Lane Card -->
+          <div class="lane-detail-card" id="detail-south">
+            <div class="lane-detail-header">
+              <span>South Approach</span>
+              <span class="badge" id="badge-q-south">0 waiting</span>
+            </div>
+            <div class="lane-sub-list">
+              <div class="sub-list-title text-red">Priority Queue (Emergency Min-Heap):</div>
+              <div class="sub-list-items" id="detail-emg-south"><div class="empty-hint">None</div></div>
+            </div>
+            <div class="lane-sub-list">
+              <div class="sub-list-title text-blue">FIFO Queue (Civilian Arrival Order):</div>
+              <div class="sub-list-items" id="detail-ord-south"><div class="empty-hint">None</div></div>
+            </div>
+          </div>
+
+          <!-- East Lane Card -->
+          <div class="lane-detail-card" id="detail-east">
+            <div class="lane-detail-header">
+              <span>East Approach</span>
+              <span class="badge" id="badge-q-east">0 waiting</span>
+            </div>
+            <div class="lane-sub-list">
+              <div class="sub-list-title text-red">Priority Queue (Emergency Min-Heap):</div>
+              <div class="sub-list-items" id="detail-emg-east"><div class="empty-hint">None</div></div>
+            </div>
+            <div class="lane-sub-list">
+              <div class="sub-list-title text-blue">FIFO Queue (Civilian Arrival Order):</div>
+              <div class="sub-list-items" id="detail-ord-east"><div class="empty-hint">None</div></div>
+            </div>
+          </div>
+
+          <!-- West Lane Card -->
+          <div class="lane-detail-card" id="detail-west">
+            <div class="lane-detail-header">
+              <span>West Approach</span>
+              <span class="badge" id="badge-q-west">0 waiting</span>
+            </div>
+            <div class="lane-sub-list">
+              <div class="sub-list-title text-red">Priority Queue (Emergency Min-Heap):</div>
+              <div class="sub-list-items" id="detail-emg-west"><div class="empty-hint">None</div></div>
+            </div>
+            <div class="lane-sub-list">
+              <div class="sub-list-title text-blue">FIFO Queue (Civilian Arrival Order):</div>
+              <div class="sub-list-items" id="detail-ord-west"><div class="empty-hint">None</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: CITY ROAD NETWORK GRAPH & DIJKSTRA VISUALIZER                -->
+    <!-- =================================================================== -->
+    <section id="tab-graph" class="tab-pane">
+      <div class="graph-layout">
+        <!-- Left: Interactive SVG Graph Canvas -->
+        <div class="graph-canvas-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Urban Road Network Topology (Graph via Adjacency List)</div>
+              <div class="text-muted text-sm">8 Strategic Intersections (Vertices) & 20 Directed Road Links (Edges)</div>
+            </div>
+            <div class="graph-legend">
+              <span class="legend-item"><span class="legend-dot dot-hub"></span> Central Hub (1)</span>
+              <span class="legend-item"><span class="legend-dot dot-node"></span> Intersections</span>
+              <span class="legend-item"><span class="legend-dot dot-path"></span> Optimal Dijkstra Path</span>
+            </div>
+          </div>
+
+          <!-- SVG Canvas -->
+          <div class="svg-wrapper">
+            <svg id="city-graph-svg" viewBox="0 0 900 600" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+                </marker>
+                <marker id="arrow-active" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#06b6d4"/>
+                </marker>
+              </defs>
+              <g id="svg-edges"></g>
+              <g id="svg-nodes"></g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Right: Route Planner & Dijkstra Inspector -->
+        <div class="route-planner-card">
+          <div class="card-header-sm">
+            <div class="card-title">Dijkstra Route Computation Engine</div>
+            <span class="badge badge-tech">O((V+E) log V)</span>
+          </div>
+
+          <div class="route-inputs">
+            <div class="control-field">
+              <label>Source Intersection (Origin):</label>
+              <select id="route-src" class="select-input">
+                <option value="2" selected>2: North Gate (Commercial District)</option>
+                <option value="1">1: Central Square (Downtown Core)</option>
+                <option value="3">3: East Bridge (Industrial Logistics)</option>
+                <option value="4">4: South Terminal (Transit Station)</option>
+                <option value="5">5: West End (Residential Suburbs)</option>
+                <option value="6">6: Tech Park (Research Corridor)</option>
+                <option value="7">7: University Circle (Campus / Hospital)</option>
+                <option value="8">8: Harbor View (Port Authority)</option>
+              </select>
+            </div>
+
+            <div class="control-field">
+              <label>Target Destination Intersection:</label>
+              <select id="route-dst" class="select-input">
+                <option value="4" selected>4: South Terminal (Transit Station)</option>
+                <option value="1">1: Central Square (Downtown Core)</option>
+                <option value="2">2: North Gate (Commercial District)</option>
+                <option value="3">3: East Bridge (Industrial Logistics)</option>
+                <option value="5">5: West End (Residential Suburbs)</option>
+                <option value="6">6: Tech Park (Research Corridor)</option>
+                <option value="7">7: University Circle (Campus / Hospital)</option>
+                <option value="8">8: Harbor View (Port Authority)</option>
+              </select>
+            </div>
+
+            <button id="btn-calculate-route" class="btn btn-primary btn-block">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Calculate Shortest Path (Dijkstra)
+            </button>
+          </div>
+
+          <!-- Dijkstra Result Card -->
+          <div class="route-result-box" id="route-result-box">
+            <div class="result-header">
+              <span class="text-cyan font-bold" id="res-status-title">Route Computed via C++ Engine</span>
+            </div>
+            <div class="result-metric">
+              <span>Total Route Distance:</span>
+              <strong id="res-total-dist">5.30 km</strong>
+            </div>
+            <div class="result-metric">
+              <span>Estimated Urban Travel Time:</span>
+              <strong id="res-est-time">7.1 mins</strong>
+            </div>
+            <div class="result-path-seq">
+              <div class="sub-list-title">Optimal Node Traversal Sequence:</div>
+              <div id="res-path-breadcrumbs" class="breadcrumbs">
+                <!-- Node pills -->
+              </div>
+            </div>
+            <div class="result-explanation" id="res-explanation">
+              Min-priority queue extracted vertices by minimum tentative distance. Optimal cost verified.
+            </div>
+          </div>
+
+          <!-- Adjacency List Inspector -->
+          <div class="adj-list-card">
+            <div class="sub-list-title">Adjacency List Structure in C++:</div>
+            <pre class="code-preview" id="adj-list-preview">
+[1] Central Square   --> [2] 2.5km, [3] 3.2km, [4] 2.8km, [5] 3.0km
+[2] North Gate       --> [1] 2.5km, [6] 4.1km
+[3] East Bridge      --> [1] 3.2km, [6] 4.5km, [8] 3.8km
+[4] South Terminal   --> [1] 2.8km, [7] 2.2km
+[5] West End         --> [1] 3.0km, [7] 3.5km
+[6] Tech Park        --> [2] 4.1km, [3] 4.5km
+[7] University Circle--> [4] 2.2km, [5] 3.5km, [8] 5.0km
+[8] Harbor View      --> [3] 3.8km, [7] 5.0km</pre>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: DSA DEEP-DIVE VISUALIZER                                     -->
+    <!-- =================================================================== -->
+    <section id="tab-dsa" class="tab-pane">
+      <div class="dsa-grid">
+
+        <!-- Card A: FIFO Queue Visualizer -->
+        <div class="dsa-card">
+          <div class="dsa-card-header">
+            <div>
+              <span class="badge badge-blue">Data Structure A</span>
+              <h3 class="dsa-card-title">Singly-Linked FIFO Queue (Civilian Traffic)</h3>
+            </div>
+            <span class="badge badge-tech">O(1) Enqueue / Dequeue</span>
+          </div>
+          <p class="dsa-desc">
+            Civilian vehicles cannot overtake within a single-lane road approach. FLOWGRID models this physical constraint using a singly-linked node list maintaining dedicated <code>head</code> and <code>tail</code> pointers.
+          </p>
+
+          <div class="dsa-interactive-diagram">
+            <div class="diagram-label">Live FIFO Queue Structure:</div>
+            <div class="queue-nodes-track" id="visual-fifo-track">
+              <!-- Rendered nodes -->
+              <div class="queue-node head-node">
+                <span class="ptr-tag">HEAD (Exit)</span>
+                <span class="node-id">VEH-0001</span>
+                <span class="node-type">Car</span>
+              </div>
+              <div class="node-arrow">⟶</div>
+              <div class="queue-node">
+                <span class="node-id">VEH-0002</span>
+                <span class="node-type">Bus</span>
+              </div>
+              <div class="node-arrow">⟶</div>
+              <div class="queue-node tail-node">
+                <span class="ptr-tag">TAIL (Enter)</span>
+                <span class="node-id">VEH-0003</span>
+                <span class="node-type">Truck</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dsa-properties">
+            <div class="prop-item">
+              <strong>Invariant:</strong> First vehicle enqueued at <code>tail</code> is strictly the first vehicle dequeued at <code>head</code>.
+            </div>
+            <div class="prop-item">
+              <strong>Memory Safety:</strong> Built with C++17 <code>std::unique_ptr&lt;Node&gt;</code> to eliminate memory leaks and dangling pointers.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card B: Priority Queue Binary Min-Heap Visualizer -->
+        <div class="dsa-card">
+          <div class="dsa-card-header">
+            <div>
+              <span class="badge badge-red">Data Structure B</span>
+              <h3 class="dsa-card-title">Binary Min-Heap Priority Queue (Emergency Traffic)</h3>
+            </div>
+            <span class="badge badge-tech">O(log N) Push / Pop | O(1) Peek</span>
+          </div>
+          <p class="dsa-desc">
+            Life-critical emergency vehicles preempt regular traffic. Urgency follows integer levels: <strong>Ambulance (1) &gt; Fire Engine (2) &gt; Police (3)</strong>. Ties are broken deterministically by monotonic arrival sequence numbers.
+          </p>
+
+          <div class="dsa-interactive-diagram">
+            <div class="diagram-label">Binary Min-Heap Tree Structure:</div>
+            <div class="heap-tree-visual">
+              <div class="heap-level level-0">
+                <div class="heap-circle root-circle">
+                  <span class="heap-val">P1: Amb</span>
+                  <span class="heap-idx">Index [0]</span>
+                </div>
+              </div>
+              <div class="heap-branches">
+                <span>/</span><span>\</span>
+              </div>
+              <div class="heap-level level-1">
+                <div class="heap-circle">
+                  <span class="heap-val">P2: Fire</span>
+                  <span class="heap-idx">Left [1]</span>
+                </div>
+                <div class="heap-circle">
+                  <span class="heap-val">P3: Police</span>
+                  <span class="heap-idx">Right [2]</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dsa-properties">
+            <div class="prop-item">
+              <strong>Index Formulas:</strong> Parent: <code>⌊(i-1)/2⌋</code> | Left Child: <code>2i + 1</code> | Right Child: <code>2i + 2</code>.
+            </div>
+            <div class="prop-item">
+              <strong>Sifting:</strong> <code>siftUp()</code> restores heap invariant upon insertion; <code>siftDown()</code> restores it upon root extraction.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card C: Adaptive Timing & Starvation Prevention -->
+        <div class="dsa-card">
+          <div class="dsa-card-header">
+            <div>
+              <span class="badge badge-purple">Algorithm B & C</span>
+              <h3 class="dsa-card-title">Adaptive Signal Timing & Anti-Starvation Rule</h3>
+            </div>
+            <span class="badge badge-tech">Safety & Fairness</span>
+          </div>
+          <p class="dsa-desc">
+            Fixed timers waste green cycles on empty approaches. FLOWGRID computes green duration dynamically based on approaching queue length $L$, while enforcing a strict anti-starvation policy.
+          </p>
+
+          <div class="formula-box">
+            <div class="formula-title">Adaptive Green Duration Formula:</div>
+            <div class="formula-math">
+              $$T_{\text{green}} = \text{clamp}\left(T_{\text{base}} + \left\lfloor \frac{L}{2} \right\rfloor, T_{\text{min}}, T_{\text{max}}\right)$$
+            </div>
+            <div class="formula-params">
+              <span>$T_{\text{base}} = 4$s</span>
+              <span>$T_{\text{min}} = 3$s</span>
+              <span>$T_{\text{max}} = 10$s</span>
+              <span>$T_{\text{yellow}} = 2$s</span>
+            </div>
+          </div>
+
+          <div class="dsa-properties">
+            <div class="prop-item">
+              <strong>Starvation Prevention Rule 1:</strong> After 3 consecutive emergency vehicle dispatches, exactly 1 civilian vehicle is granted right-of-way.
+            </div>
+            <div class="prop-item">
+              <strong>Starvation Prevention Rule 2:</strong> If a civilian vehicle waits $\ge 5$ simulation steps, it receives an emergency bypass clearance.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card D: Master Complexity Reference -->
+        <div class="dsa-card">
+          <div class="dsa-card-header">
+            <div>
+              <span class="badge badge-cyan">Complexity Cheat-Sheet</span>
+              <h3 class="dsa-card-title">Master Time & Space Complexity Summary</h3>
+            </div>
+            <span class="badge badge-tech">Viva Ready</span>
+          </div>
+
+          <table class="complexity-table">
+            <thead>
+              <tr>
+                <th>Operation / Algorithm</th>
+                <th>Underlying DSA</th>
+                <th>Time Complexity</th>
+                <th>Space</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ordinary Enqueue / Dequeue</td>
+                <td>Singly-Linked FIFO Queue</td>
+                <td><strong class="text-green">O(1)</strong></td>
+                <td>O(1)</td>
+              </tr>
+              <tr>
+                <td>Emergency Push / Pop</td>
+                <td>Binary Min-Heap</td>
+                <td><strong class="text-cyan">O(log N)</strong></td>
+                <td>O(1)</td>
+              </tr>
+              <tr>
+                <td>Shortest Path Routing</td>
+                <td>Dijkstra (Adjacency List + Min-Heap)</td>
+                <td><strong class="text-amber">O((V + E) log V)</strong></td>
+                <td>O(V)</td>
+              </tr>
+              <tr>
+                <td>Vehicle Lookup by ID</td>
+                <td>Hash Table (<code>unordered_map</code>)</td>
+                <td><strong class="text-green">O(1) avg</strong></td>
+                <td>O(N)</td>
+              </tr>
+              <tr>
+                <td>Congestion / Delay Ranking</td>
+                <td>Introsort (<code>std::sort</code>)</td>
+                <td><strong class="text-cyan">O(N log N)</strong></td>
+                <td>O(log N)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: COLLEGE VIVA PREP & REPORT PREVIEW                           -->
+    <!-- =================================================================== -->
+    <section id="tab-viva" class="tab-pane">
+      <div class="viva-layout">
+        <div class="viva-header-card">
+          <h2>College Viva Voce Q&A (28 Questions)</h2>
+          <p class="text-muted">Click any question below to toggle the concise, technically correct answer for your academic evaluation.</p>
+          <div class="viva-filter-bar">
+            <input type="text" id="inp-viva-search" placeholder="Filter questions by keyword (e.g. Dijkstra, Starvation, Queue)...">
+          </div>
+        </div>
+
+        <div class="viva-accordion" id="viva-accordion">
+          <!-- Dynamically populated from JS with 28 Q&As -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div><strong>FLOWGRID</strong> — Real-Time Urban Traffic Management System | C++17 DSA Academic Mini Project</div>
+    <div class="footer-links">
+      <span>Offline Architecture</span> • 
+      <span>Zero Paid APIs</span> • 
+      <span>14/14 Tests Verified</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
